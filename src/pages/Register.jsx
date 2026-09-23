@@ -12,12 +12,66 @@ function Register() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState("");
+
+  const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/;
+
+  // At least 8 characters, one uppercase, one lowercase,
+  // one number, and one special character
+  const PASSWORD_REGEX =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])[A-Za-z\d!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]{8,}$/;
+
+  function isValidEmail(email) {
+    const trimmed = email.trim();
+
+    if (!EMAIL_REGEX.test(trimmed)) {
+      return false;
+    }
+
+    const domain = trimmed.split("@")[1];
+    const firstLabel = domain.split(".")[0];
+
+    // Reject domains where the name part is just numbers, e.g. 123.com
+    if (/^\d+$/.test(firstLabel)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function isStrongPassword(password) {
+    return PASSWORD_REGEX.test(password);
+  }
+
+  function getPasswordStrengthLabel(password) {
+    if (!password) {
+      return "";
+    }
+
+    let score = 0;
+
+    if (password.length >= 8) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) score++;
+
+    if (score <= 2) return "Weak";
+    if (score <= 4) return "Medium";
+    return "Strong";
+  }
 
   function handleChange(e) {
+    const { name, value } = e.target;
+
     setForm({
       ...form,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+
+    if (name === "password") {
+      setPasswordStrength(getPasswordStrengthLabel(value));
+    }
   }
 
   async function handleRegister(e) {
@@ -25,6 +79,18 @@ function Register() {
 
     if (!form.name || !form.email || !form.password) {
       alert("Please fill all fields.");
+      return;
+    }
+
+    if (!isValidEmail(form.email)) {
+      alert("Please enter a valid email address (e.g. name@example.com).");
+      return;
+    }
+
+    if (!isStrongPassword(form.password)) {
+      alert(
+        "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a special character."
+      );
       return;
     }
 
@@ -211,6 +277,29 @@ function Register() {
                   minLength="6"
                 />
               </div>
+
+              {form.password && (
+                <p
+                  style={{
+                    marginTop: "6px",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                    color:
+                      passwordStrength === "Strong"
+                        ? "#22a55c"
+                        : passwordStrength === "Medium"
+                          ? "#e0a323"
+                          : "#e0433a"
+                  }}
+                >
+                  Password strength: {passwordStrength}
+                </p>
+              )}
+
+              <small style={{ color: "#666" }}>
+                Use 8+ characters with uppercase, lowercase, a number
+                and a special character.
+              </small>
 
             </div>
 

@@ -12,6 +12,26 @@ function Login() {
 
   const [loading, setLoading] = useState(false);
 
+  const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/;
+
+  function isValidEmail(email) {
+    const trimmed = email.trim();
+
+    if (!EMAIL_REGEX.test(trimmed)) {
+      return false;
+    }
+
+    const domain = trimmed.split("@")[1];
+    const firstLabel = domain.split(".")[0];
+
+    // Reject domains where the name part is just numbers, e.g. 123.com
+    if (/^\d+$/.test(firstLabel)) {
+      return false;
+    }
+
+    return true;
+  }
+
   function handleChange(e) {
     setForm({
       ...form,
@@ -24,6 +44,11 @@ function Login() {
 
     if (!form.email || !form.password) {
       alert("Please enter email and password.");
+      return;
+    }
+
+    if (!isValidEmail(form.email)) {
+      alert("Please enter a valid email address (e.g. name@example.com).");
       return;
     }
 

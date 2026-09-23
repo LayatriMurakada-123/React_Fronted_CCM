@@ -25,8 +25,12 @@ function AddComplaint() {
       description: "",
       status: "Pending",
       priority: "Medium",
-      assignedOfficer: "Not Assigned"
+      assignedOfficer: "Not Assigned",
+      image: "",
+      otherCrimeType: ""
     });
+
+  const [imagePreview, setImagePreview] = useState("");
 
   function handleChange(e) {
 
@@ -35,6 +39,34 @@ function AddComplaint() {
       [e.target.name]:
         e.target.value
     });
+
+  }
+
+  function handleImageChange(e) {
+
+    const file = e.target.files[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      setForm(prev => ({
+        ...prev,
+        image: dataUrl
+      }));
+      setImagePreview(dataUrl);
+    };
+
+    reader.readAsDataURL(file);
 
   }
 
@@ -52,10 +84,19 @@ function AddComplaint() {
           response.data.length + 1
         ).padStart(3, "0")}`;
 
+      const { otherCrimeType, ...rest } = form;
+
+      const finalCrimeType =
+        form.crimeType === "Others"
+          ? otherCrimeType.trim()
+          : form.crimeType;
+
       await api.post(
         "/complaints",
         {
-          ...form,
+          ...rest,
+          crimeType: finalCrimeType,
+          image: form.image || "https://images.unsplash.com/photo-1584824486509-112e4181ff6b?auto=format&fit=crop&w=800&q=80",
           complaintNumber: number
         }
       );
@@ -124,7 +165,18 @@ function AddComplaint() {
           <option>Vehicle Theft</option>
           <option>Online Scam</option>
           <option>Property Dispute</option>
+          <option>Others</option>
         </select>
+
+        {form.crimeType === "Others" && (
+          <input
+            name="otherCrimeType"
+            placeholder="Please specify the crime type"
+            required
+            value={form.otherCrimeType}
+            onChange={handleChange}
+          />
+        )}
 
         <input
           name="location"
@@ -132,6 +184,33 @@ function AddComplaint() {
           required
           onChange={handleChange}
         />
+
+        <div className="form-field">
+          <label htmlFor="crimeImage">
+            Photo of the Incident (optional)
+          </label>
+
+          <input
+            id="crimeImage"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+          />
+
+          {imagePreview && (
+            <img
+              src={imagePreview}
+              alt="Selected crime evidence"
+              className="image-preview"
+              style={{
+                marginTop: "10px",
+                width: "100%",
+                maxWidth: "260px",
+                borderRadius: "8px"
+              }}
+            />
+          )}
+        </div>
 
         <input
           type="date"
